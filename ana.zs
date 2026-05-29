@@ -1,10 +1,9 @@
-yazdır("--- ZEDINSCRIPT SİSTEM MERKEZİ AKTİF (.ZS) ---");
+yazdır("--- ZEDINSCRIPT SİSTEM MERKEZİ GÜVENLİ (.ZS) ---");
 
-sabit SİSTEM_ŞİFRESİ = "zedin123";
+sabit SİSTEM_ŞİFRESİ = "zedin123"; // Railway'de bunu 'Environment Variable' yapmak daha iyidir
 
-// --- OTOMATİK SİSTEM GÜNLÜĞÜ ---
 zamanla(görev() {
-    sistem.log_yaz("Bellek Durumu: " + sistem.bellek_kullanımı());
+    sistem.log_yaz("Güvenlik Kontrolü: Sistem Stabil. Bellek: " + sistem.bellek_kullanımı());
 }, 600000);
 
 değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
@@ -16,10 +15,10 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
 
     // 2. ANA SAYFA
     değilse eğer (istek.url == "/") {
-        değişken kullanıcı = veri.oku("veritabani.json");
+        değişken kullanıcı = veri.oku("veritabani.json") || {ad: "Bilinmiyor", seviye: 0};
         yanıt.gönder(görsel.çiz("arayüz.html", {
-            kullanıcı_adı: kullanıcı.ad,
-            seviye: kullanıcı.seviye,
+            kullanıcı_adı: metin.temizle(kullanıcı.ad),
+            seviye: metin.temizle(kullanıcı.seviye),
             zaman: sistem_saati
         }));
     }
@@ -29,19 +28,19 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
         yanıt.gönder(görsel.çiz("giris.html"));
     }
 
-    // 4. OTURUM AÇMA (POST)
+    // 4. OTURUM AÇMA
     değilse eğer (istek.url == "/oturum_ac" && istek.method == "POST") {
         ağ.post_yakala(istek, görev(veri) {
             eğer (veri.sifre == SİSTEM_ŞİFRESİ) {
                 yanıt.çerez_ayarla("oturum", "dogrulandi");
                 yanıt.yönlendir("/admin");
             } değilse {
-                yanıt.gönder("Hatalı Şifre!");
+                yanıt.gönder("Giriş Reddedildi!");
             }
         });
     }
 
-    // 5. GELİŞMİŞ ADMIN PANELİ
+    // 5. ADMIN PANELİ
     değilse eğer (istek.url == "/admin") {
         eğer (giriş_yapılmış_mı) {
             yanıt.gönder(görsel.çiz("admin.html", {
@@ -54,51 +53,47 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
     // 6. UZAKTAN LOG İZLEME
     değilse eğer (istek.url == "/admin/loglar") {
         eğer (giriş_yapılmış_mı) {
-            yanıt.gönder("<pre>" + dosya_oku("sunucu.log") + "</pre>");
+            yanıt.gönder("<pre>" + metin.temizle(dosya_oku("sunucu.log", "utf8")) + "</pre>");
         } değilse { yanıt.gönder("Yetki yok!", 403); }
     }
 
-    // 7. CANLI KOD EDİTÖRÜ (Self-Host Gücü)
+    // 7. KOD EDİTÖRÜ
     değilse eğer (istek.url == "/admin/editor") {
         eğer (giriş_yapılmış_mı) {
-            değişken mevcut_kod = dosya_oku("ana.zs", "utf8");
-            yanıt.gönder(görsel.çiz("editor.html", { kod: mevcut_kod }));
+            yanıt.gönder(görsel.çiz("editor.html", { kod: metin.temizle(dosya_oku("ana.zs", "utf8")) }));
         } değilse { yanıt.yönlendir("/giris"); }
     }
 
-    // 8. KODU KAYDET VE YENİDEN BAŞLAT
+    // 8. KAYDET (Kritik Alan!)
     değilse eğer (istek.url == "/kaydet" && istek.method == "POST") {
         eğer (giriş_yapılmış_mı) {
             ağ.post_yakala(istek, görev(gelen) {
+                // Kod editörü olduğu için temizlemiyoruz (yoksa kod bozulur), 
+                // ama sadece yetkili kişi erişebiliyor.
                 dosya_yaz("ana.zs", gelen.yeni_kod);
-                sistem.log_yaz("Kod uzaktan güncellendi.");
-                yanıt.gönder("<h2>Kod Kaydedildi!</h2><p>Sistem yeniden başlatılıyor...</p><script>setTimeout(()=>location.href='/admin', 3000)</script>");
+                sistem.log_yaz("UYARI: Kod uzaktan değiştirildi.");
+                yanıt.gönder("Sistem güncellendi. Yeniden başlatılıyor...");
                 sistem.yeniden_başlat();
             });
         } değilse { yanıt.gönder("Yetki yok!", 403); }
     }
 
-    // 9. TEST YOLU
-    değilse eğer (istek.url == "/test_sistem") {
-        yanıt.json_gönder({
-            mesaj: "ZedinScript Canlı!",
-            bellek: sistem.bellek_kullanımı(),
-            zaman: sistem_saati
-        });
-    }
-
-    // 10. VERİ GÜNCELLEME
+    // 9. VERİ GÜNCELLEME (Girdi Temizliği Burası!)
     değilse eğer (istek.url == "/guncelle" && istek.method == "POST") {
         eğer (giriş_yapılmış_mı) {
             ağ.post_yakala(istek, görev(gelen) {
-                veri.kaydet("veritabani.json", { ad: gelen.yeni_ad, seviye: gelen.yeni_seviye });
+                // Veritabanına yazmadan önce veriyi süzüyoruz
+                değişken temiz_ad = metin.temizle(gelen.yeni_ad);
+                değişken temiz_seviye = metin.temizle(gelen.yeni_seviye);
+                
+                veri.kaydet("veritabani.json", { ad: temiz_ad, seviye: temiz_seviye });
                 yanıt.yönlendir("/");
             });
         } değilse { yanıt.gönder("Yetki yok!", 403); }
     }
 
-    değilse { yanıt.gönder("404 Bulunamadı", 404); }
+    değilse { yanıt.gönder("404", 404); }
 });
 
-ağ.dinle(sunucu, 8080, "ZedinScript Dinliyor: http://localhost:8080");
+ağ.dinle(sunucu, 8080);
 

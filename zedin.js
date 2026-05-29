@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-// --- ZEDINSCRIPT SÖZLÜK ---
 const SOZLUK = {
     'değişken': 'let', 'sabit': 'const', 'eğer': 'if', 'değilse': 'else',
     'döndür': 'return', 'görev': 'function', 'yazdır': 'console.log',
@@ -35,7 +34,12 @@ const Matematik = {
 const Metin = {
     büyük_harf: (m) => m.toUpperCase(),
     uzunluk: (m) => m.length,
-    içeriyor_mu: (m, p) => m.includes(p)
+    içeriyor_mu: (m, p) => m.includes(p),
+    // XSS Koruması: HTML etiketlerini etkisiz hale getirir
+    temizle: (m) => {
+        if(typeof m !== 'string') return m;
+        return m.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
 };
 
 const Sistem = {
@@ -44,10 +48,7 @@ const Sistem = {
         fs.appendFileSync('sunucu.log', log);
     },
     bellek_kullanımı: () => Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
-    yeniden_başlat: () => {
-        console.log("ZedinScript: Yeniden başlatma sinyali alındı.");
-        process.exit(0); // Bekçi bunu yakalayıp geri açacak
-    }
+    yeniden_başlat: () => { console.log("ZedinScript: Yeniden başlatılıyor..."); process.exit(0); }
 };
 
 const Veri = {
@@ -71,7 +72,14 @@ const Gorsel = {
 const Ag = {
     sunucu_kur: (islem) => {
         return http.createServer((istek, yanit) => {
+            // GÜVENLİK BAŞLIKLARI (A Seviyesi için)
+            yanit.setHeader('X-Content-Type-Options', 'nosniff');
+            yanit.setHeader('X-Frame-Options', 'DENY');
+            yanit.setHeader('X-XSS-Protection', '1; mode=block');
+            yanit.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline';");
+
             if (istek.url === '/favicon.ico') { yanit.writeHead(204); return yanit.end(); }
+            
             yanit.gönder = (mesaj, stat = 200) => {
                 yanit.writeHead(stat, {'Content-Type': 'text/html; charset=utf-8'});
                 yanit.end(mesaj);
@@ -81,16 +89,17 @@ const Ag = {
                 yanit.end(JSON.stringify(veri));
             };
             yanit.dosya_gönder = (yol) => {
-                const tamYol = path.join(process.cwd(), yol);
+                const tamYol = path.join(process.cwd(), path.normalize(yol).replace(/^(\.\.(\/|\\|$))+/, ''));
                 if (fs.existsSync(tamYol)) {
                     const uzanti = path.extname(tamYol);
                     yanit.writeHead(200, {'Content-Type': TIPLER[uzanti] || 'text/plain'});
                     fs.createReadStream(tamYol).pipe(yanit);
-                } else { yanit.writeHead(404); yanit.end("Dosya bulunamadı."); }
+                } else { yanit.writeHead(404); yanit.end("404"); }
             };
             yanit.yönlendir = (yol) => { yanit.writeHead(302, {'Location': yol}); yanit.end(); };
             yanit.çerez_ayarla = (isim, deger) => {
-                yanit.setHeader('Set-Cookie', `${isim}=${deger}; Path=/; HttpOnly; Max-Age=3600`);
+                // Güvenli çerez ayarları
+                yanit.setHeader('Set-Cookie', `${isim}=${deger}; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600`);
             };
             islem(istek, yanit);
         });
@@ -103,14 +112,12 @@ const Ag = {
     },
     post_yakala: (istek, geri_donus) => {
         let govde = '';
-        istek.on('data', p => { govde += p; });
+        istek.on('data', p => { if(govde.length < 1e6) govde += p; }); // 1MB Sınırı (DoS Koruması)
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
     dinle: (sunucu, kapi, mesaj) => {
         const port = process.env.PORT || kapi || 8080;
-        sunucu.listen(port, '0.0.0.0', () => {
-            console.log(mesaj || `${port} portu üzerinden ZedinScript aktif!`);
-        });
+        sunucu.listen(port, '0.0.0.0', () => { console.log(mesaj || `${port} aktif!`); });
     }
 };
 
