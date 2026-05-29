@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { exec } = require('child_process');
 
 // --- ZEDINSCRIPT SÖZLÜK ---
 const SOZLUK = {
@@ -22,30 +21,23 @@ function ceviriYap(hamKod) {
     return islenmiş;
 }
 
-const TIPLER = { 
-    '.html': 'text/html', 
-    '.css': 'text/css', 
-    '.js': 'text/javascript', 
-    '.zs': 'text/plain', 
-    '.jpg': 'image/jpeg', 
-    '.png': 'image/png', 
-    '.json': 'application/json' 
+const TIPLER = {
+    '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript',
+    '.zs': 'text/plain', '.jpg': 'image/jpeg', '.png': 'image/png', '.json': 'application/json'
 };
 
-// --- STANDART KÜTÜPHANELER ---
-const Matematik = { 
-    kök_al: Math.sqrt, 
-    rastgele: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min, 
-    pi: Math.PI 
+const Matematik = {
+    kök_al: Math.sqrt,
+    rastgele: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
+    pi: Math.PI
 };
 
-const Metin = { 
-    büyük_harf: (m) => m.toUpperCase(), 
-    uzunluk: (m) => m.length, 
-    içeriyor_mu: (m, p) => m.includes(p) 
+const Metin = {
+    büyük_harf: (m) => m.toUpperCase(),
+    uzunluk: (m) => m.length,
+    içeriyor_mu: (m, p) => m.includes(p)
 };
 
-// Geliştirilmiş Sistem Kontrolü
 const Sistem = {
     log_yaz: (mesaj) => {
         const log = `[${new Date().toLocaleString()}] ${mesaj}\n`;
@@ -53,18 +45,14 @@ const Sistem = {
     },
     bellek_kullanımı: () => Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
     yeniden_başlat: () => {
-        console.log("ZedinScript: Sistem yeniden başlatılıyor...");
-        process.exit(0); 
+        console.log("ZedinScript: Yeniden başlatma sinyali alındı.");
+        process.exit(0); // Bekçi bunu yakalayıp geri açacak
     }
 };
 
 const Veri = {
-    kaydet: (dosya, icerik) => {
-        fs.writeFile(dosya, JSON.stringify(icerik, null, 2), 'utf8', () => {});
-    },
-    oku: (dosya) => {
-        try { return JSON.parse(fs.readFileSync(dosya, 'utf8')); } catch(e) { return null; }
-    }
+    kaydet: (dosya, icerik) => fs.writeFileSync(dosya, JSON.stringify(icerik, null, 2), 'utf8'),
+    oku: (dosya) => { try { return JSON.parse(fs.readFileSync(dosya, 'utf8')); } catch(e) { return null; } }
 };
 
 const Gorsel = {
@@ -119,15 +107,18 @@ const Ag = {
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
     dinle: (sunucu, kapi, mesaj) => {
-        sunucu.listen(kapi, '0.0.0.0', () => { console.log(mesaj || kapi + " dinleniyor..."); });
+        const port = process.env.PORT || kapi || 8080;
+        sunucu.listen(port, '0.0.0.0', () => {
+            console.log(mesaj || `${port} portu üzerinden ZedinScript aktif!`);
+        });
     }
 };
 
 const getir = (dosya) => {
     const js = ceviriYap(fs.readFileSync(path.resolve(process.cwd(), dosya), 'utf8'));
     let p = {};
-    const betik = new Function('fs', 'console', 'matematik', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'paylaş', 'setInterval', 'sistem', 'dosya_oku', 'dosya_yaz', js);
-    betik(fs, console, Matematik, Metin, Veri, Ag, Gorsel, getir, p, setInterval, Sistem, fs.readFileSync, fs.writeFileSync);
+    const betik = new Function('fs', 'console', 'matematik', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'paylaş', 'setInterval', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', js);
+    betik(fs, console, Matematik, Metin, Veri, Ag, Gorsel, getir, p, setInterval, Sistem, fs.readFileSync, fs.writeFileSync, Date.now());
     return p;
 };
 
@@ -135,18 +126,10 @@ function calistir(dosya) {
     if (!dosya) return;
     try {
         const js = ceviriYap(fs.readFileSync(dosya, 'utf8'));
-        const betik = new Function('fs', 'console', 'matematik', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'setInterval', 'sistem', 'dosya_oku', 'dosya_yaz', js);
-        betik(fs, console, Matematik, Metin, Veri, Ag, Gorsel, getir, setInterval, Sistem, fs.readFileSync, fs.writeFileSync);
+        const betik = new Function('fs', 'console', 'matematik', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'setInterval', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', js);
+        betik(fs, console, Matematik, Metin, Veri, Ag, Gorsel, getir, setInterval, Sistem, fs.readFileSync, fs.writeFileSync, Date.now());
     } catch (hata) { console.error("HATA:", hata.message); }
 }
 
 calistir(process.argv[2]);
-
-// ... eski kodlar
-    dinle: (s, k) => {
-        // Railway'in verdiği portu kullan, yoksa 8080 kullan
-        const port = process.env.PORT || k || 8080;
-        s.listen(port, '0.0.0.0', () => console.log(port + " portu üzerinden ZedinScript aktif!"));
-    }
-// ...
 
