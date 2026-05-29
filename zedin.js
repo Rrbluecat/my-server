@@ -2,6 +2,18 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
+// --- GÜVENLİK SİSTEMLERİ (DOS/FLOOD KORUMASI) ---
+const ISTEK_KAYITLARI = {}; 
+const TEMIZLIK_ARALIGI = 60000; // 1 dakika
+
+// Eski IP kayıtlarını periyodik temizle
+setInterval(() => {
+    const simdi = Date.now();
+    for (let ip in ISTEK_KAYITLARI) {
+        if (simdi - ISTEK_KAYITLARI[ip].zaman > TEMIZLIK_ARALIGI) delete ISTEK_KAYITLARI[ip];
+    }
+}, TEMIZLIK_ARALIGI);
+
 const SOZLUK = {
     'değişken': 'let', 'sabit': 'const', 'eğer': 'if', 'değilse': 'else',
     'döndür': 'return', 'görev': 'function', 'yazdır': 'console.log',
@@ -35,7 +47,6 @@ const Metin = {
     büyük_harf: (m) => m.toUpperCase(),
     uzunluk: (m) => m.length,
     içeriyor_mu: (m, p) => m.includes(p),
-    // XSS Koruması: HTML etiketlerini etkisiz hale getirir
     temizle: (m) => {
         if(typeof m !== 'string') return m;
         return m.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
@@ -45,7 +56,7 @@ const Metin = {
 const Sistem = {
     log_yaz: (mesaj) => {
         const log = `[${new Date().toLocaleString()}] ${mesaj}\n`;
-        fs.appendFileSync('sunucu.log', log);
+        fs.appendFile('sunucu.log', log, () => {}); // Senkron değil asenkron yaparak hızı artırdık
     },
     bellek_kullanımı: () => Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
     yeniden_başlat: () => { console.log("ZedinScript: Yeniden başlatılıyor..."); process.exit(0); }
@@ -58,7 +69,7 @@ const Veri = {
 
 const Gorsel = {
     çiz: (dosya, veriler) => {
-        if (!fs.existsSync(dosya)) return "Şablon yok: " + dosya;
+        if (!fs.existsSync(dosya)) return "Şablon bulunamadı.";
         let icerik = fs.readFileSync(dosya, 'utf8');
         if (veriler) {
             Object.keys(veriler).forEach(anahtar => {
@@ -72,14 +83,31 @@ const Gorsel = {
 const Ag = {
     sunucu_kur: (islem) => {
         return http.createServer((istek, yanit) => {
-            // GÜVENLİK BAŞLIKLARI (A Seviyesi için)
+            const ip = istek.headers['x-forwarded-for'] || istek.socket.remoteAddress;
+            const simdi = Date.now();
+
+            // --- RATE LIMITER (İSTEK SINIRLAYICI) ---
+            if (!ISTEK_KAYITLARI[ip]) ISTEK_KAYITLARI[ip] = { adet: 0, zaman: simdi };
+            if (simdi - ISTEK_KAYITLARI[ip].zaman < 1000) {
+                ISTEK_KAYITLARI[ip].adet++;
+                if (ISTEK_KAYITLARI[ip].adet > 15) { // Saniyede 15+ istek atan engellenir
+                    yanit.writeHead(429, {'Content-Type': 'text/plain'});
+                    return yanit.end("Güvenlik: Çok fazla istek gönderildi!");
+                }
+            } else {
+                ISTEK_KAYITLARI[ip] = { adet: 1, zaman: simdi };
+            }
+
+            // --- GÜVENLİK HEADERS (A+ SEVİYESİ) ---
             yanit.setHeader('X-Content-Type-Options', 'nosniff');
             yanit.setHeader('X-Frame-Options', 'DENY');
             yanit.setHeader('X-XSS-Protection', '1; mode=block');
-            yanit.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline';");
+            yanit.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            yanit.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+            yanit.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;");
 
             if (istek.url === '/favicon.ico') { yanit.writeHead(204); return yanit.end(); }
-            
+
             yanit.gönder = (mesaj, stat = 200) => {
                 yanit.writeHead(stat, {'Content-Type': 'text/html; charset=utf-8'});
                 yanit.end(mesaj);
@@ -98,8 +126,8 @@ const Ag = {
             };
             yanit.yönlendir = (yol) => { yanit.writeHead(302, {'Location': yol}); yanit.end(); };
             yanit.çerez_ayarla = (isim, deger) => {
-                // Güvenli çerez ayarları
-                yanit.setHeader('Set-Cookie', `${isim}=${deger}; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600`);
+                // Secure bayrağı Railway (HTTPS) için önemlidir
+                yanit.setHeader('Set-Cookie', `${isim}=${deger}; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=3600`);
             };
             islem(istek, yanit);
         });
@@ -112,11 +140,12 @@ const Ag = {
     },
     post_yakala: (istek, geri_donus) => {
         let govde = '';
-        istek.on('data', p => { if(govde.length < 1e6) govde += p; }); // 1MB Sınırı (DoS Koruması)
+        istek.on('data', p => { if(govde.length < 500000) govde += p; }); // 500KB Sınırı (DoS Koruması)
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
     dinle: (sunucu, kapi, mesaj) => {
         const port = process.env.PORT || kapi || 8080;
+        sunucu.timeout = 10000; // 10 saniye boşta duran bağlantıyı kapat (Slowloris Koruması)
         sunucu.listen(port, '0.0.0.0', () => { console.log(mesaj || `${port} aktif!`); });
     }
 };
