@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/stil.css">
+    <title>ZedinScript Canlı Panel</title>
+</head>
+<body>
+    <h1>ZedinScript Gücü</h1>
+    <div id="hareketliKutu" class="kutu">TIKLA!</div>
+    <div class="mesaj">Hoş geldin, {{kullanıcı_adı}}!</div>
+
+    <script>
+        const kutu = document.getElementById('hareketliKutu');
+        
+        // Tıklayınca kaçan buton mantığı
+        kutu.addEventListener('mouseover', function() {
+            const x = Math.random() * (window.innerWidth - 200);
+            const y = Math.random() * (window.innerHeight - 200);
+            
+            kutu.style.position = 'absolute';
+            kutu.style.left = x + 'px';
+            kutu.style.top = y + 'px';
+        });
+
+        kutu.addEventListener('click', function() {
+            alert('Yakaladın! ZedinScript seni seviyor.');
+        });
+    </script>
+</body>
+</html>
+

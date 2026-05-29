@@ -1,0 +1,8 @@
+// Bu bir dış kütüphanedir
+görev kare_al(n) {
+    döndür n * n;
+}
+
+paylaş.kare_al = kare_al;
+paylaş.bilgi = "ZedinScript Hesaplama Modülü v1";
+

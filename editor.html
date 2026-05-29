@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/stil.css">
+    <title>Zedin Editor</title>
+</head>
+<body>
+    <h1>ZedinScript Canlı Editör</h1>
+    <div class="panel" style="max-width: 900px; width: 95%;">
+        <form action="/kaydet" method="POST">
+            <textarea name="yeni_kod" style="width: 100%; height: 400px; background: #000; color: #0f0; border: 1px solid var(--neon-blue); font-family: monospace; padding: 10px;">{{kod}}</textarea>
+            <br><br>
+            <button type="submit">Sistemi Güncelle (Kaydet)</button>
+            <button type="button" onclick="location.href='/admin'" style="background: #333;">İptal</button>
+        </form>
+    </div>
+</body>
+</html>
+

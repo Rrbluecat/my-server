@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/stil.css">
+    <title>Zedin Dashboard</title>
+</head>
+<body>
+    <h1>ZedinScript Komuta Merkezi</h1>
+    
+    <div class="panel">
+        <div class="istatistik">
+            <span>Sistem Durumu:</span>
+            <span style="color: #0f0;">AKTİF</span>
+        </div>
+        <div class="istatistik">
+            <span>Bellek Kullanımı:</span>
+            <span>{{bellek}}</span>
+        </div>
+        <div class="istatistik">
+            <span>Sunucu Saati:</span>
+            <span>{{zaman}}</span>
+        </div>
+        
+        <h3>Canlı Log Akışı</h3>
+        <div class="log-box" id="loglar">
+            Yükleniyor...
+        </div>
+        
+        <br>
+        <button onclick="location.href='/'">Ana Sayfaya Dön</button>
+        <button onclick="logYükle()" style="background: #333;">Logları Yenile</button>
+    </div>
+
+    <script>
+        function logYükle() {
+            fetch('/admin/loglar').then(r => r.text()).then(data => {
+                document.getElementById('loglar').innerHTML = data;
+            });
+        }
+        // Sayfa açılınca logları getir
+        logYükle();
+        // Her 10 saniyede bir otomatik yenile
+        setInterval(logYükle, 10000);
+    </script>
+</body>
+</html>
+
