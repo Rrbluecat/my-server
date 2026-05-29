@@ -22,11 +22,28 @@ function ceviriYap(hamKod) {
     return islenmiş;
 }
 
-const TIPLER = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.jpg': 'image/jpeg', '.png': 'image/png', '.json': 'application/json' };
+const TIPLER = { 
+    '.html': 'text/html', 
+    '.css': 'text/css', 
+    '.js': 'text/javascript', 
+    '.zs': 'text/plain', 
+    '.jpg': 'image/jpeg', 
+    '.png': 'image/png', 
+    '.json': 'application/json' 
+};
 
 // --- STANDART KÜTÜPHANELER ---
-const Matematik = { kök_al: Math.sqrt, rastgele: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min, pi: Math.PI };
-const Metin = { büyük_harf: (m) => m.toUpperCase(), uzunluk: (m) => m.length, içeriyor_mu: (m, p) => m.includes(p) };
+const Matematik = { 
+    kök_al: Math.sqrt, 
+    rastgele: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min, 
+    pi: Math.PI 
+};
+
+const Metin = { 
+    büyük_harf: (m) => m.toUpperCase(), 
+    uzunluk: (m) => m.length, 
+    içeriyor_mu: (m, p) => m.includes(p) 
+};
 
 // Geliştirilmiş Sistem Kontrolü
 const Sistem = {
@@ -36,8 +53,8 @@ const Sistem = {
     },
     bellek_kullanımı: () => Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
     yeniden_başlat: () => {
-        console.log("Sistem yeniden başlatılıyor...");
-        process.exit(0); // Watchdog (bekçi) bunu yakalayıp tekrar açacak
+        console.log("ZedinScript: Sistem yeniden başlatılıyor...");
+        process.exit(0); 
     }
 };
 
@@ -101,8 +118,8 @@ const Ag = {
         istek.on('data', p => { govde += p; });
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
-    dinle: (sunucu, kapi, mesaj) => { 
-        sunucu.listen(kapi, '0.0.0.0', () => { console.log(mesaj || kapi + " dinleniyor..."); }); 
+    dinle: (sunucu, kapi, mesaj) => {
+        sunucu.listen(kapi, '0.0.0.0', () => { console.log(mesaj || kapi + " dinleniyor..."); });
     }
 };
 
@@ -114,7 +131,7 @@ const getir = (dosya) => {
     return p;
 };
 
-function motor(dosya) {
+function calistir(dosya) {
     if (!dosya) return;
     try {
         const js = ceviriYap(fs.readFileSync(dosya, 'utf8'));
@@ -123,5 +140,13 @@ function motor(dosya) {
     } catch (hata) { console.error("HATA:", hata.message); }
 }
 
-motor(process.argv[2]);
+calistir(process.argv[2]);
+
+// ... eski kodlar
+    dinle: (s, k) => {
+        // Railway'in verdiği portu kullan, yoksa 8080 kullan
+        const port = process.env.PORT || k || 8080;
+        s.listen(port, '0.0.0.0', () => console.log(port + " portu üzerinden ZedinScript aktif!"));
+    }
+// ...
 
