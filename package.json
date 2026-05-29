@@ -1,8 +1,11 @@
 {
-  "name": "my-server",
+  "name": "zedinscript-server",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "ZedinScript Runtime",
+  "main": "zedin.js",
   "scripts": {
-    "start": "node server.js"
-  }
+    "start": "node zedin.js ana.zs"
+  },
+  "dependencies": {}
 }
+
