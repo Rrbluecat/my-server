@@ -72,10 +72,22 @@ const Ag = {
         istek.on('data', p => { if(govde.length < 500000) govde += p; });
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
-    dinle: (sunucu, kapi) => {
-        const port = process.env.PORT || kapi || 8080;
-        sunucu.listen(port, '0.0.0.0', () => { console.log(`[ZEDIN] Sistem ${port} üzerinde aktif!`); });
-    }
+   // zedin.js içindeki Ag objesinin dinle metodu
+dinle: (sunucu, kapi) => {
+    const port = process.env.PORT || kapi || 8080;
+
+    sunucu.on('error', (hata) => {
+        if (hata.code === 'EADDRINUSE') {
+            console.error(`[ZEDIN] HATA: ${port} portu zaten kullanımda!`);
+            console.log("[ZEDIN] 5 saniye içinde portun boşalması bekleniyor...");
+            setTimeout(() => { process.exit(1); }, 5000); // 1 yerine 5 saniye ver ki port boşa düşsün
+        }
+    });
+
+    sunucu.listen(port, '0.0.0.0', () => { 
+        console.log(`[ZEDIN] Sistem ${port} üzerinde aktif!`); 
+    });
+   }
 };
 
 const getir = (dosya) => {

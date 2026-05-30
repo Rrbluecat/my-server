@@ -4,8 +4,13 @@ const { spawn } = require('child_process');
 console.log("--- [BEKÇİ] 5 saniye soğutma bekleniyor... ---");
 setTimeout(baslat, 5000); // Hemen başlama, bir dur ortalık sakinleşsin.
 
+// bekci.js içindeki baslat fonksiyonunun başı
 function baslat() {
-    // ... senin bekçi kodların buraya gelecek ...
+    console.log("--- [BEKÇİ] Liman kontrol ediliyor... ---");
+    // Önceki denemeden kalan bir node süreci varsa Railway'in temizlemesi için zaman tanı
+    setTimeout(() => {
+        // ... süreç başlatma kodları ...
+    }, 2000);
 }
 
 // Yapılandırma
@@ -14,7 +19,7 @@ const AYARLAR = {
     betik: 'ana.zs',
     max_deneme: 5,         // Üst üste kaç kez denesin?
     hata_penceresi: 30000, // 30 saniye içinde çökerse deneme sayısını artır
-    yeniden_baslat_ms: 2000 // Çökünce ne kadar beklesin?
+    yeniden_baslat_ms: 5000 // Çökünce ne kadar beklesin?
 };
 
 let deneme_sayisi = 0;
