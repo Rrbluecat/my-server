@@ -8,6 +8,7 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
     değişken giriş_yapılmış_mı = (çerezler.oturum == "dogrulandi");
     eğer (istek.url == "/stil.css") { yanıt.dosya_gönder("stil.css"); döndür; }
     değilse eğer (istek.url == "/logo.png" || istek.url == "/zedin_logo.png") { yanıt.dosya_gönder("zedin_logo.png"); döndür; }
+    değilse eğer (istek.url == "/favicon.ico") { yanıt.dosya_gönder("zedin_logo.png"); döndür; }
     değilse eğer (istek.url == "/") {
         değişken kullanıcı = veri.oku("veritabani.json") || {ad: "Bilinmiyor", seviye: 0};
         değişken link_verisi = veri.oku("linkler.json") || [];
