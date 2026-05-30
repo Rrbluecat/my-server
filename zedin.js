@@ -31,14 +31,13 @@ const Ag = {
         return http.createServer((istek, yanit) => {
             const ip = istek.headers['x-forwarded-for'] || istek.socket.remoteAddress;
 
-            // --- GÜVENLİK DUVARI (Senin İstediğin Blok) ---
+            // --- GÜVENLİK DUVARI ---
             if (!koruma.hizSiniri(ip) || !koruma.sorguKontrol(istek.url)) {
-                koruma.basliklariAyarla(yanit); // Hata verse bile güvenlik başlıklarını ekle!
+                koruma.basliklariAyarla(yanit);
                 yanit.writeHead(403, {'Content-Type': 'text/plain; charset=utf-8'});
                 return yanit.end("Erisim Engellendi");
             }
-            
-            // Başarılı istekler için de başlıkları ayarla
+
             koruma.basliklariAyarla(yanit);
 
             // --- YANIT METOTLARI ---
@@ -83,8 +82,8 @@ const getir = (dosya) => {
     const ham = fs.readFileSync(path.resolve(process.cwd(), dosya), 'utf8');
     const js = optimizasyon.hizliCeviri(ham);
     let p = {};
-    const betik = new Function('fs', 'console', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'paylaş', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', js);
-    betik(fs, console, Metin, {}, Ag, {}, getir, p, Sistem, fs.readFileSync, fs.writeFileSync, Date.now());
+    const betik = new Function('fs', 'console', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'paylaş', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', 'yazdır', 'zamanla', js);
+    betik(fs, console, Metin, {}, Ag, {}, getir, p, Sistem, fs.readFileSync, fs.writeFileSync, Date.now(), console.log, setInterval);
     return p;
 };
 
@@ -93,8 +92,8 @@ function calistir(dosya) {
     try {
         const ham = fs.readFileSync(dosya, 'utf8');
         const js = optimizasyon.hizliCeviri(ham);
-        const betik = new Function('fs', 'console', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', js);
-        betik(fs, console, Metin, {}, Ag, {}, getir, Sistem, fs.readFileSync, fs.writeFileSync, Date.now());
+        const betik = new Function('fs', 'console', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', 'yazdır', 'zamanla', js);
+        betik(fs, console, Metin, {}, Ag, {}, getir, Sistem, fs.readFileSync, fs.writeFileSync, Date.now(), console.log, setInterval);
     } catch (hata) { console.error("HATA:", hata.message); }
 }
 
