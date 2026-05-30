@@ -73,38 +73,19 @@ const Ag = {
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
    // zedin.js içindeki Ag objesinin dinle metodu
-   dinle: (sunucu, kapi) => {
-       // Railway'in verdiği portu al, yoksa kapi'yi kullan, o da yoksa 8080
-    const port = process.env.PORT ||
- kapi || 8080;
+// zedin.js içindeki dinleme kısmı
+const port = process.env.PORT || 8080;
 
-    sunucu.on('error', (hata) => {
-        if (hata.code === 'EADDRINUSE') {
-{
-            // Port doluysa bekçiye haber ver ama hemen ölme
-            console.error(`[ZEDIN] Port ${port} dolu, 10 saniye sonra tekrar denenecek...`);
-            setTimeout(() => { process.exit(1); }, 10000);
-        }
-    });
+sunucu.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+        console.error(`[ZEDIN] Port ${port} meşgul!`);
+        process.exit(1); // Bekçiye haber ver
+    }
+});
 
-    sunucu.listen(port, '0.0.0.0', () => {
-        console.log(`[ZEDIN] Sistem ${port} üzerinde aktif!`);
-    });
-}
-
-    sunucu.on('error', (hata) => {
-        if (hata.code === 'EADDRINUSE') {
-            console.error(`[ZEDIN] HATA: ${port} portu zaten kullanımda!`);
-            console.log("[ZEDIN] 5 saniye içinde portun boşalması bekleniyor...");
-            setTimeout(() => { process.exit(1); }, 5000); // 1 yerine 5 saniye ver ki port boşa düşsün
-        }
-    });
-
-    sunucu.listen(port, '0.0.0.0', () => { 
-        console.log(`[ZEDIN] Sistem ${port} üzerinde aktif!`); 
-    });
-   }
-};
+sunucu.listen(port, '0.0.0.0', () => {
+    console.log(`--- [ZEDIN] Sistem ${port} üzerinde aktif! ---`);
+});
 
 const getir = (dosya) => {
     const ham = fs.readFileSync(path.resolve(process.cwd(), dosya), 'utf8');

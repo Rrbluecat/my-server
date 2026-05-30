@@ -1,42 +1,32 @@
-#!/usr/bin/env node
 const { spawn } = require('child_process');
-
-console.log("--- [BEKÇİ] 5 saniye soğutma bekleniyor... ---");
-setTimeout(baslat, 5000); // Hemen başlama, bir dur ortalık sakinleşsin.
-
-// bekci.js içindeki baslat fonksiyonunun başı
-function baslat() {
-    console.log("--- [BEKÇİ] Liman kontrol ediliyor... ---");
-    // Önceki denemeden kalan bir node süreci varsa Railway'in temizlemesi için zaman tanı
-    setTimeout(() => {
-        // ... süreç başlatma kodları ...
-    }, 2000);
-}
 
 // Yapılandırma
 const AYARLAR = {
     dosya: 'zedin.js',
     betik: 'ana.zs',
-    max_deneme: 3,          // Deneme sayısını azalt ama süreyi uzat
-    hata_penceresi: 120000, // 2 dakikalık pencere
-    yeniden_baslat_ms: 15000 // Çökme sonrası 15 saniye bekle (Kritik!)
+    max_deneme: 5,
+    hata_penceresi: 60000,
+    yeniden_baslat_ms: 10000 // 10 saniye bekle ki liman boşalsın
 };
 
-    // Eğer sistem çok hızlı çöktüyse deneme sayısını artır
+let deneme_sayisi = 0;
+let son_baslatma = Date.now();
+
+function baslat() {
+    const simdi = Date.now();
+    
     if (simdi - son_baslatma < AYARLAR.hata_penceresi) {
         deneme_sayisi++;
     } else {
-        // Sistem bir süredir stabil çalışıyorsa sayacı sıfırla
         deneme_sayisi = 0;
     }
 
     if (deneme_sayisi >= AYARLAR.max_deneme) {
-        console.error(`--- [BEKÇİ] KRİTİK HATA: Sistem ${AYARLAR.max_deneme} kez üst üste çöktü! ---`);
-        console.error("--- [BEKÇİ] 1 dakika boyunca yeni deneme yapılmayacak... ---");
+        console.error(`--- [BEKÇİ] KRİTİK: Sistem üst üste çöktü. 1 dk mola... ---`);
         setTimeout(() => {
             deneme_sayisi = 0;
             baslat();
-        }, 60000); // 1 dakika ceza ver
+        }, 60000);
         return;
     }
 
@@ -49,22 +39,16 @@ const AYARLAR = {
     });
 
     surec.on('close', (kod) => {
-        if (kod === 0) {
-            console.log(`--- [BEKÇİ] Sistem temiz bir şekilde kapandı. ---`);
-        } else {
-            console.error(`--- [BEKÇİ] Sistem HATA ile kapandı (Kod: ${kod}). ---`);
-        }
-        
+        console.log(`--- [BEKÇİ] Sistem kapandı (Kod: ${kod}). ${AYARLAR.yeniden_baslat_ms/1000} sn sonra restart... ---`);
         setTimeout(baslat, AYARLAR.yeniden_baslat_ms);
     });
 
-    // Bekçinin kendisi hata alırsa
     surec.on('error', (hata) => {
-        console.error(`--- [BEKÇİ] Süreç başlatılamadı: ${hata.message} ---`);
+        console.error(`--- [BEKÇİ] Hata: ${hata.message} ---`);
     });
 }
 
-// Global hata yakalayıcı (Bekçinin kendisi ölmesin)
+// Global hata yakalayıcı
 process.on('uncaughtException', (hata) => {
     console.error(`--- [BEKÇİ] İç Hata: ${hata.message} ---`);
 });
