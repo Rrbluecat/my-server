@@ -2,55 +2,18 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-// --- GÜVENLİK SİSTEMLERİ (DOS/FLOOD KORUMASI) ---
-const ISTEK_KAYITLARI = {}; 
-const TEMIZLIK_ARALIGI = 60000; // 1 dakika
+// 1. Modül ve Kayıt Tanımlamaları
+// Eğer koruma.js kullanıyorsan bu satır aktif olmalı:
+const koruma = require('./koruma'); 
+const ISTEK_KAYITLARI = {};
+const TEMIZLIK_ARALIGI = 60000;
 
-// Eski IP kayıtlarını periyodik temizle
 setInterval(() => {
     const simdi = Date.now();
     for (let ip in ISTEK_KAYITLARI) {
         if (simdi - ISTEK_KAYITLARI[ip].zaman > TEMIZLIK_ARALIGI) delete ISTEK_KAYITLARI[ip];
     }
 }, TEMIZLIK_ARALIGI);
-
-// zedin.js'nin en başına ekle:
-const koruma = require('./koruma'); 
-
-// ... (SOZLUK ve diğer kısımlar aynı kalıyor)
-
-const Ag = {
-    sunucu_kur: (islem) => {
-        return http.createServer((istek, yanit) => {
-            const ip = istek.headers['x-forwarded-for'] || istek.socket.remoteAddress;
-
-            // --- DIŞ GÜVENLİK DOSYASI KONTROLLERİ ---
-            if (!koruma.hizSiniri(ip)) {
-                yanit.writeHead(429, {'Content-Type': 'text/plain'});
-                return yanit.end("Guvenlik: Cok fazla istek!");
-            }
-
-            koruma.basliklariAyarla(yanit);
-
-            if (!koruma.yolGuvenliMi(istek.url)) {
-                yanit.writeHead(403);
-                return yanit.end("Yasakli Yol!");
-            }
-            // ---------------------------------------
-
-            // Senin orijinal yanit metotların (dokunmuyoruz):
-            yanit.gönder = (mesaj, stat = 200) => {
-                yanit.writeHead(stat, {'Content-Type': 'text/html; charset=utf-8'});
-                yanit.end(mesaj);
-            };
-            // ... (yanit.json_gönder, yanit.dosya_gönder vb. aynı kalıyor)
-
-            islem(istek, yanit); // Senin ana.zs'deki görevini çalıştırır
-        });
-    },
-    // ... (Ag.dinle, post_yakala vb. aynı)
-};
-
 
 const SOZLUK = {
     'değişken': 'let', 'sabit': 'const', 'eğer': 'if', 'değilse': 'else',
@@ -94,7 +57,7 @@ const Metin = {
 const Sistem = {
     log_yaz: (mesaj) => {
         const log = `[${new Date().toLocaleString()}] ${mesaj}\n`;
-        fs.appendFile('sunucu.log', log, () => {}); // Senkron değil asenkron yaparak hızı artırdık
+        fs.appendFile('sunucu.log', log, () => {});
     },
     bellek_kullanımı: () => Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
     yeniden_başlat: () => { console.log("ZedinScript: Yeniden başlatılıyor..."); process.exit(0); }
@@ -118,34 +81,20 @@ const Gorsel = {
     }
 };
 
+// --- TEK VE GERÇEK AG TANIMI ---
 const Ag = {
     sunucu_kur: (islem) => {
         return http.createServer((istek, yanit) => {
             const ip = istek.headers['x-forwarded-for'] || istek.socket.remoteAddress;
-            const simdi = Date.now();
 
-            // --- RATE LIMITER (İSTEK SINIRLAYICI) ---
-            if (!ISTEK_KAYITLARI[ip]) ISTEK_KAYITLARI[ip] = { adet: 0, zaman: simdi };
-            if (simdi - ISTEK_KAYITLARI[ip].zaman < 1000) {
-                ISTEK_KAYITLARI[ip].adet++;
-                if (ISTEK_KAYITLARI[ip].adet > 15) { // Saniyede 15+ istek atan engellenir
-                    yanit.writeHead(429, {'Content-Type': 'text/plain'});
-                    return yanit.end("Güvenlik: Çok fazla istek gönderildi!");
-                }
-            } else {
-                ISTEK_KAYITLARI[ip] = { adet: 1, zaman: simdi };
+            // 1. Güvenlik Kontrolleri (koruma.js üzerinden)
+            if (!koruma.hizSiniri(ip)) {
+                yanit.writeHead(429, {'Content-Type': 'text/plain'});
+                return yanit.end("Guvenlik: Cok fazla istek!");
             }
+            koruma.basliklariAyarla(yanit);
 
-            // --- GÜVENLİK HEADERS (A+ SEVİYESİ) ---
-            yanit.setHeader('X-Content-Type-Options', 'nosniff');
-            yanit.setHeader('X-Frame-Options', 'DENY');
-            yanit.setHeader('X-XSS-Protection', '1; mode=block');
-            yanit.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-            yanit.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-            yanit.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;");
-
-            if (istek.url === '/favicon.ico') { yanit.writeHead(204); return yanit.end(); }
-
+            // 2. Yanıt Metotları
             yanit.gönder = (mesaj, stat = 200) => {
                 yanit.writeHead(stat, {'Content-Type': 'text/html; charset=utf-8'});
                 yanit.end(mesaj);
@@ -164,9 +113,9 @@ const Ag = {
             };
             yanit.yönlendir = (yol) => { yanit.writeHead(302, {'Location': yol}); yanit.end(); };
             yanit.çerez_ayarla = (isim, deger) => {
-                // Secure bayrağı Railway (HTTPS) için önemlidir
                 yanit.setHeader('Set-Cookie', `${isim}=${deger}; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=3600`);
             };
+
             islem(istek, yanit);
         });
     },
@@ -178,12 +127,12 @@ const Ag = {
     },
     post_yakala: (istek, geri_donus) => {
         let govde = '';
-        istek.on('data', p => { if(govde.length < 500000) govde += p; }); // 500KB Sınırı (DoS Koruması)
+        istek.on('data', p => { if(govde.length < 500000) govde += p; });
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
     dinle: (sunucu, kapi, mesaj) => {
         const port = process.env.PORT || kapi || 8080;
-        sunucu.timeout = 10000; // 10 saniye boşta duran bağlantıyı kapat (Slowloris Koruması)
+        sunucu.timeout = 10000;
         sunucu.listen(port, '0.0.0.0', () => { console.log(mesaj || `${port} aktif!`); });
     }
 };
