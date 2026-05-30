@@ -95,7 +95,7 @@ const getir = (dosya) => {
     const js = optimizasyon.hizliCeviri(ham);
     let p = {};
     const betik = new Function('fs', 'console', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'paylaş', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', 'yazdır', 'zamanla', js);
-    betik(fs, console, Metin, {}, Ag, {}, getir, p, Sistem, fs.readFileSync, fs.writeFileSync, Date.now(), console.log, setInterval);
+    betik(fs, console, Metin, Veri, Ag, Gorsel, getir, Sistem, fs.readFileSync, fs.writeFileSync, Date.now(), console.log, setInterval);
     return p;
 };
 
