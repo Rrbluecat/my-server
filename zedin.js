@@ -60,7 +60,7 @@ const Gorsel = {
             console.error("[GÖRSEL] Hata:", e.message);
             return "Dosya bulunamadı: " + dosya;
         }
-    }      
+    }
 };
 
 let aktifSunucu = null;
