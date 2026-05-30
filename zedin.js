@@ -31,14 +31,15 @@ const Ag = {
         return http.createServer((istek, yanit) => {
             const ip = istek.headers['x-forwarded-for'] || istek.socket.remoteAddress;
 
-            // Önce güvenlik başlıklarını basıyoruz (Hata olsa da gitmeli!)
-            koruma.basliklariAyarla(yanit);
-
-            // --- GÜVENLİK DUVARI ---
+            // --- GÜVENLİK DUVARI (Senin İstediğin Blok) ---
             if (!koruma.hizSiniri(ip) || !koruma.sorguKontrol(istek.url)) {
+                koruma.basliklariAyarla(yanit); // Hata verse bile güvenlik başlıklarını ekle!
                 yanit.writeHead(403, {'Content-Type': 'text/plain; charset=utf-8'});
-                return yanit.end("Erisim Engellendi / Guvenlik Ihlali");
+                return yanit.end("Erisim Engellendi");
             }
+            
+            // Başarılı istekler için de başlıkları ayarla
+            koruma.basliklariAyarla(yanit);
 
             // --- YANIT METOTLARI ---
             yanit.gönder = (mesaj, stat = 200) => {

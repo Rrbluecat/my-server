@@ -11,13 +11,13 @@ const Koruma = {
             return true;
         }
 
-        // Test modu için geçici yüksek limit (İstediğinde 30'a çekersin)
+        // TEST İÇİN: Bu limiti 5000 yaparsan 'ab' testinde gerçek hızı görürsün
         if (ISTEK_DEPOSU[ip].adet > 1000) return false;
 
         const fark = simdi - ISTEK_DEPOSU[ip].zaman;
         if (fark < 1000) {
             ISTEK_DEPOSU[ip].adet++;
-            if (ISTEK_DEPOSU[ip].adet > 30) { 
+            if (ISTEK_DEPOSU[ip].adet > 30) {
                 ISTEK_DEPOSU[ip].ihlal++;
                 if (ISTEK_DEPOSU[ip].ihlal > 3) KARA_LISTE.add(ip);
                 return false;
@@ -34,7 +34,9 @@ const Koruma = {
         yanit.setHeader('X-Frame-Options', 'DENY');
         yanit.setHeader('X-XSS-Protection', '1; mode=block');
         yanit.setHeader('Content-Security-Policy', "default-src 'self';");
+        // EKSİK OLAN: A+ için bu şart!
         yanit.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        yanit.setHeader('Referrer-Policy', 'no-referrer');
     },
 
     sorguKontrol: (url) => {
