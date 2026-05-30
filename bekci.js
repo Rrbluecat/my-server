@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
-// ... geri kalan kodlar aynı
+
+console.log("--- [BEKÇİ] 5 saniye soğutma bekleniyor... ---");
+setTimeout(baslat, 5000); // Hemen başlama, bir dur ortalık sakinleşsin.
+
+function baslat() {
+    // ... senin bekçi kodların buraya gelecek ...
+}
 
 // Yapılandırma
 const AYARLAR = {
