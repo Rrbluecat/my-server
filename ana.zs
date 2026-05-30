@@ -97,5 +97,4 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
     değilse { yanıt.gönder("404", 404); }
 });
 
-ağ.dinle(sunucu, 8080);
-
+ağ.dinle(8080)

@@ -6,6 +6,7 @@ const SOZLUK = {
     'devam_et': 'continue', 'dosya_oku': 'fs.readFileSync',
     'dosya_yaz': 'fs.writeFileSync', 'sistem_saati': 'Date.now()',
     'bekle': 'setTimeout', 'zamanla': 'setInterval', 'getir': 'getir', 'paylaş': 'paylaş'
+    'her_biri': 'forEach': 'ekle': 'push': 'kaydet': 'yaz':  
 };
 
 // Regex'i bir kez oluşturup önbelleğe alıyoruz (Hızın anahtarı burası)

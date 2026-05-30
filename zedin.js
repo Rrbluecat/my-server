@@ -47,7 +47,21 @@ const Veri = {
     }
 };
 
-const Gorsel = { durum: "Aktif" }; 
+const Gorsel = {
+    durum: "Aktif",
+    çiz: (dosya, veri = {}) => {
+        try {
+            let icerik = fs.readFileSync(path.resolve(process.cwd(), dosya), 'utf8');
+            for (const [anahtar, deger] of Object.entries(veri)) {
+                icerik = icerik.replace(new RegExp('{{' + anahtar + '}}', 'g'), deger);
+            }
+            return icerik;
+        } catch (e) {
+            console.error("[GÖRSEL] Hata:", e.message);
+            return "Dosya bulunamadı: " + dosya;
+        }
+    }      
+};
 
 let aktifSunucu = null;
 
