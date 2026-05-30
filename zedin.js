@@ -26,7 +26,29 @@ const Sistem = {
     yeniden_başlat: () => { console.log("ZedinScript Yenileniyor..."); process.exit(0); }
 };
 
-// Global sunucu değişkeni (Ag.dinle içinde kullanacağız)
+// --- VERİ MODÜLÜ (Hata Buradaydı) ---
+const Veri = {
+    oku: (dosya) => {
+        try {
+            const tamYol = path.resolve(process.cwd(), dosya);
+            if (fs.existsSync(tamYol)) {
+                const icerik = fs.readFileSync(tamYol, 'utf8');
+                return JSON.parse(icerik);
+            }
+        } catch (e) { console.error("[VERİ] Okuma Hatası:", e.message); }
+        return null;
+    },
+    yaz: (dosya, icerik) => {
+        try {
+            const tamYol = path.resolve(process.cwd(), dosya);
+            fs.writeFileSync(tamYol, JSON.stringify(icerik, null, 2));
+            return true;
+        } catch (e) { console.error("[VERİ] Yazma Hatası:", e.message); return false; }
+    }
+};
+
+const Gorsel = { durum: "Aktif" }; 
+
 let aktifSunucu = null;
 
 const Ag = {
@@ -77,22 +99,15 @@ const Ag = {
         istek.on('data', p => { if(govde.length < 500000) govde += p; });
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
-    // EKSİK OLAN METOT BURASIYDI:
     dinle: (p, mesaj) => {
         const port = process.env.PORT || p || 8080;
         if (aktifSunucu) {
             aktifSunucu.listen(port, '0.0.0.0', () => {
                 console.log(mesaj || `--- [ZEDIN] Sistem ${port} üzerinde aktif! ---`);
             });
-        } else {
-            console.error("HATA: Önce ağ.sunucu_kur ile sunucuyu oluşturmalısın!");
         }
     }
 };
-
-// --- YARDIMCI TANIMLAR ---
-const Veri = {};
-const Gorsel = {};
 
 const getir = (dosya) => {
     try {
@@ -108,17 +123,14 @@ function calistir(dosya) {
     try {
         const ham = fs.readFileSync(dosya, 'utf8');
         const js = optimizasyon.hizliCeviri(ham);
-        // Function parametrelerini betiklerle eşleştiriyoruz
         const betik = new Function('fs', 'console', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', 'yazdır', 'zamanla', js);
         betik(fs, console, Metin, Veri, Ag, Gorsel, getir, Sistem, fs.readFileSync, fs.writeFileSync, Date.now(), console.log, setInterval);
     } catch (hata) { 
-        console.error("--- ZEDINSCRIPT SİSTEM HATASI ---");
-        console.error("Dosya:", dosya);
+        console.error("--- ZEDINSCRIPT BETİK HATASI ---");
         console.error("Hata:", hata.message); 
     }
 }
 
-// Komut satırından gelen .zs dosyasını çalıştır (Örn: node zedin.js index.zs)
 if(process.argv[2]) {
     calistir(process.argv[2]);
 }
