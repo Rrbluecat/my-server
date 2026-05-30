@@ -22,7 +22,7 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
             saat: sistem_saati
         }));
     }
-    değilse eğer (istek.url == "/giris") { yanıt.gönder(görsel.çiz("giris.htyml")); }
+    değilse eğer (istek.url == "/giris") { yanıt.gönder(görsel.çiz("giris.html")); }
     değilse eğer (istek.url == "/oturum_ac" && istek.method == "POST") {
         ağ.post_yakala(istek, görev(veri) {
             eğer (veri.sifre == SİSTEM_ŞİFRESİ) {
