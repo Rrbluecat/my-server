@@ -1,11 +1,4 @@
-{
-  "name": "zedinscript-server",
-  "version": "1.0.0",
-  "description": "ZedinScript Watchdog Powered Server",
-  "main": "bekci.js",
-  "scripts": {
-    "start": "node bekci.js"
-  },
-  "dependencies": {}
+"scripts": {
+  "start": "node bekci.js"
 }
 
