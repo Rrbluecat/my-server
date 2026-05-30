@@ -15,7 +15,7 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
         link_verisi.her_biri(görev(l) {
             link_html += "<li><a href='" + l.url + "'>" + l.ad + "</a></li>";
         });
-        yanıt.gönder(görsel.çiz("arayüz.html", {
+        yanıt.gönder(görsel.çiz("arayuz.html", {
             kullanıcı_adı: metin.temizle(kullanıcı.ad),
             seviye: metin.temizle(kullanıcı.seviye),
             linkler: link_html,

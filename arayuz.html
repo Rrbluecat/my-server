@@ -1,32 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <title>ZedinScript Web</title>
     <link rel="stylesheet" href="/stil.css">
-    <title>ZedinScript Canlı Panel</title>
 </head>
 <body>
-    <h1>ZedinScript Gücü</h1>
-    <div id="hareketliKutu" class="kutu">TIKLA!</div>
-    <div class="mesaj">Hoş geldin, {{kullanıcı_adı}}!</div>
-
-    <script>
-        const kutu = document.getElementById('hareketliKutu');
+    <div class="panel">
+        <img src="/zedin_logo.png" alt="ZEDIN" class="logo" onerror="this.style.display='none'">
+        <h1>ZedinScript Gücü!</h1>
+        <div class="istatistik">
+            <span>Kullanıcı: <b>{{kullanıcı_adı}}</b></span>
+            <span>Seviye: {{seviye}}</span>
+        </div>
         
-        // Tıklayınca kaçan buton mantığı
-        kutu.addEventListener('mouseover', function() {
-            const x = Math.random() * (window.innerWidth - 200);
-            const y = Math.random() * (window.innerHeight - 200);
-            
-            kutu.style.position = 'absolute';
-            kutu.style.left = x + 'px';
-            kutu.style.top = y + 'px';
-        });
-
-        kutu.addEventListener('click', function() {
-            alert('Yakaladın! ZedinScript seni seviyor.');
-        });
+        <div class="link-alani" style="text-align: left; margin: 20px 0;">
+            <h3>Paylaşılan Linkler</h3>
+            <ul id="link-listesi">
+                {{linkler}}
+            </ul>
+        </div>
+        <hr>
+        <form action="/add-link" method="POST">
+            <input type="text" name="l_ad" placeholder="Site Adı">
+            <input type="text" name="l_url" placeholder="https://...">
+            <button type="submit">Link Ekle</button>
+        </form>
+        <br>
+        <a href="/admin"><button style="background: linear-gradient(135deg, #00d4ff, #0066cc);">Admin Paneli</button></a>
+        <br><br>
+        <small>Sunucu Zamanı: {{saat}}</small>
+    </div>
+    <div id="kutu" style="position: absolute; width: 100px; height: 100px; background: linear-gradient(135deg, #ff4444, #cc0000); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 10px; box-shadow: 0 0 15px rgba(255,0,0,0.5); user-select: none;">YAKALA!</div>
+    <script>
+        const k = document.getElementById('kutu');
+        k.onmouseover = () => {
+            k.style.left = Math.random() * (window.innerWidth - 100) + 'px';
+            k.style.top = Math.random() * (window.innerHeight - 100) + 'px';
+            document.body.style.backgroundColor = 'rgba('+Math.random()*255+',0,0, 0.2)';
+        };
     </script>
 </body>
 </html>
-
