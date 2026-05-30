@@ -7,7 +7,7 @@
 </head>
 <body>
     <div class="panel">
-        <img src="/logo.png" alt="ZEDIN" style="width: 100px; height: auto;">
+        <img src="/zedin_logo.png" alt="ZEDIN" class="logo" onerror="this.style.display='none'">
         <h1>ZedinScript Gücü!</h1>
         <div class="istatistik">
             <span>Kullanıcı: <b>{{kullanıcı_adı}}</b></span>
@@ -20,18 +20,18 @@
                 {{linkler}}
             </ul>
         </div>
-
         <hr>
-        <form action="/link_ekle" method="POST">
-            <input type="text" name="link_adi" placeholder="Site Adı" style="padding: 5px;">
-            <input type="text" name="link_url" placeholder="https://..." style="padding: 5px;">
+        <form action="/add-link" method="POST">
+            <input type="text" name="l_ad" placeholder="Site Adı">
+            <input type="text" name="l_url" placeholder="https://...">
             <button type="submit">Link Ekle</button>
         </form>
         <br>
+        <a href="/admin"><button style="background: linear-gradient(135deg, #00d4ff, #0066cc);">Admin Paneli</button></a>
+        <br><br>
         <small>Sunucu Zamanı: {{saat}}</small>
     </div>
-
-    <div id="kutu" style="position: absolute; width: 100px; height: 100px; background: red; color: white; cursor: pointer;">YAKALA!</div>
+    <div id="kutu" style="position: absolute; width: 100px; height: 100px; background: linear-gradient(135deg, #ff4444, #cc0000); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 10px; box-shadow: 0 0 15px rgba(255,0,0,0.5); user-select: none;">YAKALA!</div>
     <script>
         const k = document.getElementById('kutu');
         k.onmouseover = () => {
@@ -42,4 +42,3 @@
     </script>
 </body>
 </html>
-

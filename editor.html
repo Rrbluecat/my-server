@@ -8,7 +8,7 @@
 <body>
     <h1>ZedinScript Canlı Editör</h1>
     <div class="panel" style="max-width: 900px; width: 95%;">
-        <form action="/kaydet" method="POST">
+        <form action="/save-kod" method="POST">
             <textarea name="yeni_kod" style="width: 100%; height: 400px; background: #000; color: #0f0; border: 1px solid var(--neon-blue); font-family: monospace; padding: 10px;">{{kod}}</textarea>
             <br><br>
             <button type="submit">Sistemi Güncelle (Kaydet)</button>
@@ -17,4 +17,50 @@
     </div>
 </body>
 </html>
-
+8. admin.html — tamamen değiştir
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/stil.css">
+    <title>Zedin Dashboard</title>
+</head>
+<body>
+    <h1>ZedinScript Komuta Merkezi</h1>
+    
+    <div class="panel">
+        <div class="istatistik">
+            <span>Sistem Durumu:</span>
+            <span style="color: #0f0;">AKTİF</span>
+        </div>
+        <div class="istatistik">
+            <span>Bellek Kullanımı:</span>
+            <span>{{bellek}}</span>
+        </div>
+        <div class="istatistik">
+            <span>Sunucu Saati:</span>
+            <span>{{zaman}}</span>
+        </div>
+        
+        <h3>Canlı Log Akışı</h3>
+        <div class="log-box" id="loglar">
+            Yükleniyor...
+        </div>
+        
+        <br>
+        <button onclick="location.href='/'">Ana Sayfaya Dön</button>
+        <button onclick="location.href='/admin/editor'">Kod Editörü</button>
+        <button onclick="logYükle()" style="background: #333;">Logları Yenile</button>
+        <button onclick="location.href='/admin/loglar'" style="background: #333;">Log Sayfası</button>
+    </div>
+    <script>
+        function logYükle() {
+            fetch('/admin/loglar').then(r => r.text()).then(data => {
+                document.getElementById('loglar').innerHTML = data;
+            });
+        }
+        logYükle();
+        setInterval(logYükle, 10000);
+    </script>
+</body>
+</html>
