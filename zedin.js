@@ -73,8 +73,24 @@ const Ag = {
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
    // zedin.js içindeki Ag objesinin dinle metodu
-dinle: (sunucu, kapi) => {
-    const port = process.env.PORT || kapi || 8080;
+   dinle: (sunucu, kapi) => {
+       // Railway'in verdiği portu al, yoksa kapi'yi kullan, o da yoksa 8080
+    const port = process.env.PORT ||
+ kapi || 8080;
+
+    sunucu.on('error', (hata) => {
+        if (hata.code === 'EADDRINUSE') {
+{
+            // Port doluysa bekçiye haber ver ama hemen ölme
+            console.error(`[ZEDIN] Port ${port} dolu, 10 saniye sonra tekrar denenecek...`);
+            setTimeout(() => { process.exit(1); }, 10000);
+        }
+    });
+
+    sunucu.listen(port, '0.0.0.0', () => {
+        console.log(`[ZEDIN] Sistem ${port} üzerinde aktif!`);
+    });
+}
 
     sunucu.on('error', (hata) => {
         if (hata.code === 'EADDRINUSE') {

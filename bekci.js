@@ -17,17 +17,11 @@ function baslat() {
 const AYARLAR = {
     dosya: 'zedin.js',
     betik: 'ana.zs',
-    max_deneme: 5,         // Üst üste kaç kez denesin?
-    hata_penceresi: 30000, // 30 saniye içinde çökerse deneme sayısını artır
-    yeniden_baslat_ms: 5000 // Çökünce ne kadar beklesin?
+    max_deneme: 3,          // Deneme sayısını azalt ama süreyi uzat
+    hata_penceresi: 120000, // 2 dakikalık pencere
+    yeniden_baslat_ms: 15000 // Çökme sonrası 15 saniye bekle (Kritik!)
 };
 
-let deneme_sayisi = 0;
-let son_baslatma = Date.now();
-
-function baslat() {
-    const simdi = Date.now();
-    
     // Eğer sistem çok hızlı çöktüyse deneme sayısını artır
     if (simdi - son_baslatma < AYARLAR.hata_penceresi) {
         deneme_sayisi++;
