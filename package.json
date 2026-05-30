@@ -1,20 +1,9 @@
 {
-  "name": "zedin-script-web",
+  "name": "zedin-script",
   "version": "1.0.0",
-  "description": "ZedinScript Güvenli Web Sunucusu",
   "main": "bekci.js",
   "scripts": {
-    "start": "node bekci.js || cat /root/.npm/_logs/*.log"
-  },
-  "dependencies": {
-    "path": "^0.12.7",
-    "http": "^0.0.1-security",
-    "fs": "0.0.1-security"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "author": "Zedin",
-  "license": "ISC"
+    "start": "node bekci.js"
+  }
 }
 
