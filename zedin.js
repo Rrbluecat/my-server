@@ -52,7 +52,7 @@ const Gorsel = {
     çiz: (dosya, veri = {}) => {
         try {
             let icerik = fs.readFileSync(path.resolve(process.cwd(), dosya), 'utf8');
-            for (const [anahtar, deger] of Object.entries(veri)) {g
+            for (const [anahtar, deger] of Object.entries(veri)) {
                 icerik = icerik.replace(new RegExp('{{' + anahtar + '}}', 'g'), deger);
             }
             return icerik;
