@@ -2,52 +2,16 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-// 1. Modül ve Kayıt Tanımlamaları
-// Eğer koruma.js kullanıyorsan bu satır aktif olmalı:
-const koruma = require('./koruma'); 
-const ISTEK_KAYITLARI = {};
-const TEMIZLIK_ARALIGI = 60000;
-
-setInterval(() => {
-    const simdi = Date.now();
-    for (let ip in ISTEK_KAYITLARI) {
-        if (simdi - ISTEK_KAYITLARI[ip].zaman > TEMIZLIK_ARALIGI) delete ISTEK_KAYITLARI[ip];
-    }
-}, TEMIZLIK_ARALIGI);
-
-const SOZLUK = {
-    'değişken': 'let', 'sabit': 'const', 'eğer': 'if', 'değilse': 'else',
-    'döndür': 'return', 'görev': 'function', 'yazdır': 'console.log',
-    'tekrarla': 'for', 'olduğu_sürece': 'while', 'dur': 'break',
-    'devam_et': 'continue', 'dosya_oku': 'fs.readFileSync',
-    'dosya_yaz': 'fs.writeFileSync', 'sistem_saati': 'Date.now()',
-    'bekle': 'setTimeout', 'zamanla': 'setInterval', 'getir': 'getir', 'paylaş': 'paylaş'
-};
-
-function ceviriYap(hamKod) {
-    let islenmiş = hamKod;
-    Object.keys(SOZLUK).forEach(anahtar => {
-        const regex = new RegExp(`(?<![a-zA-Z0-9ğüşıöçĞÜŞİÖÇ])${anahtar}(?![a-zA-Z0-9ğüşıöçĞÜŞİÖÇ])`, 'g');
-        islenmiş = islenmiş.replace(regex, SOZLUK[anahtar]);
-    });
-    return islenmiş;
-}
+// Dış Dosyaları Bağla
+const koruma = require('./koruma');
+const optimizasyon = require('./optimizasyon');
 
 const TIPLER = {
     '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript',
     '.zs': 'text/plain', '.jpg': 'image/jpeg', '.png': 'image/png', '.json': 'application/json'
 };
 
-const Matematik = {
-    kök_al: Math.sqrt,
-    rastgele: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
-    pi: Math.PI
-};
-
 const Metin = {
-    büyük_harf: (m) => m.toUpperCase(),
-    uzunluk: (m) => m.length,
-    içeriyor_mu: (m, p) => m.includes(p),
     temizle: (m) => {
         if(typeof m !== 'string') return m;
         return m.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
@@ -60,48 +24,25 @@ const Sistem = {
         fs.appendFile('sunucu.log', log, () => {});
     },
     bellek_kullanımı: () => Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
-    yeniden_başlat: () => { console.log("ZedinScript: Yeniden başlatılıyor..."); process.exit(0); }
+    yeniden_başlat: () => { console.log("ZedinScript Yenileniyor..."); process.exit(0); }
 };
 
-const Veri = {
-    kaydet: (dosya, icerik) => fs.writeFileSync(dosya, JSON.stringify(icerik, null, 2), 'utf8'),
-    oku: (dosya) => { try { return JSON.parse(fs.readFileSync(dosya, 'utf8')); } catch(e) { return null; } }
-};
-
-const Gorsel = {
-    çiz: (dosya, veriler) => {
-        if (!fs.existsSync(dosya)) return "Şablon bulunamadı.";
-        let icerik = fs.readFileSync(dosya, 'utf8');
-        if (veriler) {
-            Object.keys(veriler).forEach(anahtar => {
-                icerik = icerik.replace(new RegExp(`{{${anahtar}}}`, 'g'), veriler[anahtar]);
-            });
-        }
-        return icerik;
-    }
-};
-
-// --- TEK VE GERÇEK AG TANIMI ---
 const Ag = {
     sunucu_kur: (islem) => {
         return http.createServer((istek, yanit) => {
             const ip = istek.headers['x-forwarded-for'] || istek.socket.remoteAddress;
 
-            // 1. Güvenlik Kontrolleri (koruma.js üzerinden)
-            if (!koruma.hizSiniri(ip)) {
-                yanit.writeHead(429, {'Content-Type': 'text/plain'});
-                return yanit.end("Guvenlik: Cok fazla istek!");
+            // --- GÜVENLİK DUVARI ---
+            if (!koruma.hizSiniri(ip) || !koruma.sorguKontrol(istek.url)) {
+                yanit.writeHead(403, {'Content-Type': 'text/plain'});
+                return yanit.end("Erisim Engellendi / Guvenlik Ihlali");
             }
             koruma.basliklariAyarla(yanit);
 
-            // 2. Yanıt Metotları
+            // --- YANIT METOTLARI ---
             yanit.gönder = (mesaj, stat = 200) => {
                 yanit.writeHead(stat, {'Content-Type': 'text/html; charset=utf-8'});
                 yanit.end(mesaj);
-            };
-            yanit.json_gönder = (veri) => {
-                yanit.writeHead(200, {'Content-Type': 'application/json'});
-                yanit.end(JSON.stringify(veri));
             };
             yanit.dosya_gönder = (yol) => {
                 const tamYol = path.join(process.cwd(), path.normalize(yol).replace(/^(\.\.(\/|\\|$))+/, ''));
@@ -130,27 +71,28 @@ const Ag = {
         istek.on('data', p => { if(govde.length < 500000) govde += p; });
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
     },
-    dinle: (sunucu, kapi, mesaj) => {
+    dinle: (sunucu, kapi) => {
         const port = process.env.PORT || kapi || 8080;
-        sunucu.timeout = 10000;
-        sunucu.listen(port, '0.0.0.0', () => { console.log(mesaj || `${port} aktif!`); });
+        sunucu.listen(port, '0.0.0.0', () => { console.log(`[ZEDIN] Sistem ${port} üzerinde aktif!`); });
     }
 };
 
 const getir = (dosya) => {
-    const js = ceviriYap(fs.readFileSync(path.resolve(process.cwd(), dosya), 'utf8'));
+    const ham = fs.readFileSync(path.resolve(process.cwd(), dosya), 'utf8');
+    const js = optimizasyon.hizliCeviri(ham);
     let p = {};
-    const betik = new Function('fs', 'console', 'matematik', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'paylaş', 'setInterval', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', js);
-    betik(fs, console, Matematik, Metin, Veri, Ag, Gorsel, getir, p, setInterval, Sistem, fs.readFileSync, fs.writeFileSync, Date.now());
+    const betik = new Function('fs', 'console', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'paylaş', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', js);
+    betik(fs, console, Metin, {}, Ag, {}, getir, p, Sistem, fs.readFileSync, fs.writeFileSync, Date.now());
     return p;
 };
 
 function calistir(dosya) {
     if (!dosya) return;
     try {
-        const js = ceviriYap(fs.readFileSync(dosya, 'utf8'));
-        const betik = new Function('fs', 'console', 'matematik', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'setInterval', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', js);
-        betik(fs, console, Matematik, Metin, Veri, Ag, Gorsel, getir, setInterval, Sistem, fs.readFileSync, fs.writeFileSync, Date.now());
+        const ham = fs.readFileSync(dosya, 'utf8');
+        const js = optimizasyon.hizliCeviri(ham);
+        const betik = new Function('fs', 'console', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', js);
+        betik(fs, console, Metin, {}, Ag, {}, getir, Sistem, fs.readFileSync, fs.writeFileSync, Date.now());
     } catch (hata) { console.error("HATA:", hata.message); }
 }
 
