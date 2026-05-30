@@ -4,7 +4,7 @@
   "description": "ZedinScript Güvenli Web Sunucusu",
   "main": "bekci.js",
   "scripts": {
-    "start": "node bekci.js"
+    "start": "node bekci.js || cat /root/.npm/_logs/*.log"
   },
   "dependencies": {
     "path": "^0.12.7",
