@@ -3,30 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>ZedinScript Web</title>
-    <style>
-        body { font-family: sans-serif; background: #ffffff; text-align: center; padding: 50px; }
-        .kutu { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; }
-        b { color: #e74c3c; }
-    </style>
+    <link rel="stylesheet" href="/stil.css">
 </head>
 <body>
-    <div class="kutu">
+    <div class="panel">
+        <img src="/logo.png" alt="ZEDIN" style="width: 100px; height: auto;">
         <h1>ZedinScript Gücü!</h1>
-        <p>Merhaba <b>{{kullanıcı_adı}}</b>, sisteme hoş geldin.</p>
-        <p>Geliştirici Seviyesi: {{seviye}}</p>
+        <div class="istatistik">
+            <span>Kullanıcı: <b>{{kullanıcı_adı}}</b></span>
+            <span>Seviye: {{seviye}}</span>
+        </div>
+        
+        <div class="link-alani" style="text-align: left; margin: 20px 0;">
+            <h3>Paylaşılan Linkler</h3>
+            <ul id="link-listesi">
+                {{linkler}}
+            </ul>
+        </div>
+
         <hr>
+        <form action="/link_ekle" method="POST">
+            <input type="text" name="link_adi" placeholder="Site Adı" style="padding: 5px;">
+            <input type="text" name="link_url" placeholder="https://..." style="padding: 5px;">
+            <button type="submit">Link Ekle</button>
+        </form>
+        <br>
         <small>Sunucu Zamanı: {{zaman}}</small>
     </div>
+
+    <div id="kutu" style="position: absolute; width: 100px; height: 100px; background: red; color: white; cursor: pointer;">YAKALA!</div>
+    <script>
+        const k = document.getElementById('kutu');
+        k.onmouseover = () => {
+            k.style.left = Math.random() * (window.innerWidth - 100) + 'px';
+            k.style.top = Math.random() * (window.innerHeight - 100) + 'px';
+            document.body.style.backgroundColor = 'rgba('+Math.random()*255+',0,0, 0.2)';
+        };
+    </script>
 </body>
 </html>
-<div id="kutu" class="kutu">YAKALA!</div>
-<script>
-    const k = document.getElementById('kutu');
-    k.onmouseover = () => {
-        k.style.left = Math.random() * 200 + 'px';
-        k.style.top = Math.random() * 200 + 'px';
-        document.body.style.backgroundColor = 'rgb('+Math.random()*255+',0,0)';
-    };
-</script>
 

@@ -1,16 +1,24 @@
 :root { --neon-blue: #00d4ff; --neon-purple: #9d00ff; --dark-bg: #0a0b10; }
 
-body { 
-    background-color: var(--dark-bg); color: white; 
-    font-family: 'Courier New', monospace; display: flex; 
+body {
+    background-color: var(--dark-bg); color: white;
+    font-family: 'Courier New', monospace; display: flex;
     flex-direction: column; align-items: center; padding: 20px;
+    overflow-x: hidden;
 }
 
 .panel {
     border: 2px solid var(--neon-blue); padding: 20px;
     border-radius: 15px; box-shadow: 0 0 15px var(--neon-blue);
     background: rgba(0, 212, 255, 0.05); width: 80%; max-width: 600px;
+    text-align: center;
 }
+
+/* Link Listesi Stili */
+ul { list-style: none; padding: 0; }
+li { background: rgba(157, 0, 255, 0.1); margin: 5px 0; padding: 10px; border-radius: 5px; border-left: 3px solid var(--neon-purple); }
+a { color: var(--neon-blue); text-decoration: none; font-weight: bold; }
+a:hover { text-decoration: underline; }
 
 h1 { text-shadow: 0 0 10px var(--neon-blue); color: var(--neon-blue); }
 
@@ -19,17 +27,13 @@ h1 { text-shadow: 0 0 10px var(--neon-blue); color: var(--neon-blue); }
     background: #161b22; padding: 10px; border-radius: 8px; margin-bottom: 10px;
 }
 
-.log-box {
-    background: #000; color: #0f0; padding: 15px;
-    border-radius: 5px; height: 200px; overflow-y: auto;
-    font-size: 12px; border: 1px solid #333;
-}
-
 button {
     background: var(--neon-purple); color: white; border: none;
     padding: 10px 20px; border-radius: 5px; cursor: pointer;
-    transition: 0.3s; font-weight: bold;
+    transition: 0.3s; font-weight: bold; margin-top: 10px;
 }
 
 button:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--neon-purple); }
+
+input { background: #000; border: 1px solid var(--neon-blue); color: white; border-radius: 4px; }
 

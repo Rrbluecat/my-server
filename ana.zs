@@ -12,15 +12,29 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
 
     // 1. STATİK DOSYALAR
     eğer (istek.url == "/stil.css") { yanıt.dosya_gönder("stil.css"); döndür; }
-
+    değilse eğer (istek.url == "/logo.png")
+    { yanıt.dosya_gönder("logo.png");
+    döndür; }
+    
     // 2. ANA SAYFA
     değilse eğer (istek.url == "/") {
         değişken kullanıcı = veri.oku("veritabani.json") || {ad: "Bilinmiyor", seviye: 0};
-        yanıt.gönder(görsel.çiz("arayüz.html", {
-            kullanıcı_adı: metin.temizle(kullanıcı.ad),
-            seviye: metin.temizle(kullanıcı.seviye),
-            zaman: sistem_saati
-        }));
+    değişken link_verisi = veri.oku("linkler.json") || [];
+    değişken link_html = "";
+    link_verisi.her_biri(görev(l) {
+    link_html += "<li><a href='" + l.url + "'>" + l.ad + "</a></li>";
+    });
+
+    yanıt.gönder(görsel.çiz("arayüz.html", 
+    {	   
+        kullanıcı_adı:
+    metin.temizle(kullanıcı.ad),
+	seviye:
+    metin.temizle(kullanıcı.seviye),
+        linkler: link_html, // Burayı
+    ekledik
+	zaman: sistem_saati
+    }));
     }
 
     // 3. GİRİŞ SAYFASI
@@ -90,6 +104,26 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
                 yanıt.yönlendir("/");
             });
         } değilse { yanıt.gönder("Yetki yok!", 403); }
+    }
+
+    // 10. LİNK EKLEME
+    değilse eğer (istek.url == "/link_ekle"
+    && istek.method == "POST") {
+        ağ.post_yakala(istek, görev(gelen)
+    {
+	    değişken linkler =
+    veri.oku("linkler.json") || [];
+	    değişken yeni_link = { 
+	        ad:
+    metin.temizle(gelen.link_ad), 
+	        url:
+    metin.temizle(gelen.link_url) 
+            };
+	    linkler.ekle(yeni_link);
+	    veri.kaydet("linkler.json",
+    linkler);
+            yanıt.yönlendir("/");
+        });
     }
 
     değilse { yanıt.gönder("404", 404); }
