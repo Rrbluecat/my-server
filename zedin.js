@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-// Dış Dosyaları Bağla
 const koruma = require('./koruma');
 const optimizasyon = require('./optimizasyon');
 
@@ -32,12 +31,14 @@ const Ag = {
         return http.createServer((istek, yanit) => {
             const ip = istek.headers['x-forwarded-for'] || istek.socket.remoteAddress;
 
+            // Önce güvenlik başlıklarını basıyoruz (Hata olsa da gitmeli!)
+            koruma.basliklariAyarla(yanit);
+
             // --- GÜVENLİK DUVARI ---
             if (!koruma.hizSiniri(ip) || !koruma.sorguKontrol(istek.url)) {
-                yanit.writeHead(403, {'Content-Type': 'text/plain'});
+                yanit.writeHead(403, {'Content-Type': 'text/plain; charset=utf-8'});
                 return yanit.end("Erisim Engellendi / Guvenlik Ihlali");
             }
-            koruma.basliklariAyarla(yanit);
 
             // --- YANIT METOTLARI ---
             yanit.gönder = (mesaj, stat = 200) => {

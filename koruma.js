@@ -1,4 +1,3 @@
-// ~/ZedinScript $ cat koruma.js
 const KARA_LISTE = new Set();
 const ISTEK_DEPOSU = {};
 
@@ -12,12 +11,15 @@ const Koruma = {
             return true;
         }
 
+        // Test modu için geçici yüksek limit (İstediğinde 30'a çekersin)
+        if (ISTEK_DEPOSU[ip].adet > 1000) return false;
+
         const fark = simdi - ISTEK_DEPOSU[ip].zaman;
         if (fark < 1000) {
             ISTEK_DEPOSU[ip].adet++;
-            if (ISTEK_DEPOSU[ip].adet > 30) { // Saniyede 30+ istek
+            if (ISTEK_DEPOSU[ip].adet > 30) { 
                 ISTEK_DEPOSU[ip].ihlal++;
-                if (ISTEK_DEPOSU[ip].ihlal > 3) KARA_LISTE.add(ip); // 3 kez ihlal ederse kalıcı ban
+                if (ISTEK_DEPOSU[ip].ihlal > 3) KARA_LISTE.add(ip);
                 return false;
             }
         } else {
@@ -32,9 +34,9 @@ const Koruma = {
         yanit.setHeader('X-Frame-Options', 'DENY');
         yanit.setHeader('X-XSS-Protection', '1; mode=block');
         yanit.setHeader('Content-Security-Policy', "default-src 'self';");
+        yanit.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     },
 
-    // Basit Web Uygulaması Güvenlik Duvarı (WAF)
     sorguKontrol: (url) => {
         const tehlikeliKalıplar = [/<script/i, /UNION SELECT/i, /base64_/i, /\.\.\//];
         return !tehlikeliKalıplar.some(p => p.test(decodeURIComponent(url)));
