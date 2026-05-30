@@ -14,6 +14,44 @@ setInterval(() => {
     }
 }, TEMIZLIK_ARALIGI);
 
+// zedin.js'nin en başına ekle:
+const koruma = require('./koruma'); 
+
+// ... (SOZLUK ve diğer kısımlar aynı kalıyor)
+
+const Ag = {
+    sunucu_kur: (islem) => {
+        return http.createServer((istek, yanit) => {
+            const ip = istek.headers['x-forwarded-for'] || istek.socket.remoteAddress;
+
+            // --- DIŞ GÜVENLİK DOSYASI KONTROLLERİ ---
+            if (!koruma.hizSiniri(ip)) {
+                yanit.writeHead(429, {'Content-Type': 'text/plain'});
+                return yanit.end("Guvenlik: Cok fazla istek!");
+            }
+
+            koruma.basliklariAyarla(yanit);
+
+            if (!koruma.yolGuvenliMi(istek.url)) {
+                yanit.writeHead(403);
+                return yanit.end("Yasakli Yol!");
+            }
+            // ---------------------------------------
+
+            // Senin orijinal yanit metotların (dokunmuyoruz):
+            yanit.gönder = (mesaj, stat = 200) => {
+                yanit.writeHead(stat, {'Content-Type': 'text/html; charset=utf-8'});
+                yanit.end(mesaj);
+            };
+            // ... (yanit.json_gönder, yanit.dosya_gönder vb. aynı kalıyor)
+
+            islem(istek, yanit); // Senin ana.zs'deki görevini çalıştırır
+        });
+    },
+    // ... (Ag.dinle, post_yakala vb. aynı)
+};
+
+
 const SOZLUK = {
     'değişken': 'let', 'sabit': 'const', 'eğer': 'if', 'değilse': 'else',
     'döndür': 'return', 'görev': 'function', 'yazdır': 'console.log',
