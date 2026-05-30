@@ -1,49 +1,32 @@
-const KARA_LISTE = new Set();
-const ISTEK_DEPOSU = {};
-
+const ISTEK_DEPOSU = new Map();
 const Koruma = {
     hizSiniri: (ip) => {
-        if (KARA_LISTE.has(ip)) return false;
-
         const simdi = Date.now();
-        if (!ISTEK_DEPOSU[ip]) {
-            ISTEK_DEPOSU[ip] = { adet: 1, zaman: simdi, ihlal: 0 };
+        if (!ISTEK_DEPOSU.has(ip)) {
+            ISTEK_DEPOSU.set(ip, { adet: 1, zaman: simdi });
             return true;
         }
-
-        // TEST İÇİN: Bu limiti 5000 yaparsan 'ab' testinde gerçek hızı görürsün
-        if (ISTEK_DEPOSU[ip].adet > 1000) return false;
-
-        const fark = simdi - ISTEK_DEPOSU[ip].zaman;
-        if (fark < 1000) {
-            ISTEK_DEPOSU[ip].adet++;
-            if (ISTEK_DEPOSU[ip].adet > 30) {
-                ISTEK_DEPOSU[ip].ihlal++;
-                if (ISTEK_DEPOSU[ip].ihlal > 3) KARA_LISTE.add(ip);
-                return false;
-            }
-        } else {
-            ISTEK_DEPOSU[ip].adet = 1;
-            ISTEK_DEPOSU[ip].zaman = simdi;
+        const kayit = ISTEK_DEPOSU.get(ip);
+        if (simdi - kayit.zaman > 1000) {
+            ISTEK_DEPOSU.set(ip, { adet: 1, zaman: simdi });
+            return true;
         }
-        return true;
+        kayit.adet++;
+        return kayit.adet <= 20;
     },
-
     basliklariAyarla: (yanit) => {
         yanit.setHeader('X-Content-Type-Options', 'nosniff');
         yanit.setHeader('X-Frame-Options', 'DENY');
-        yanit.setHeader('X-XSS-Protection', '1; mode=block');
-        yanit.setHeader('Content-Security-Policy', "default-src 'self';");
-        // EKSİK OLAN: A+ için bu şart!
-        yanit.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-        yanit.setHeader('Referrer-Policy', 'no-referrer');
     },
-
     sorguKontrol: (url) => {
-        const tehlikeliKalıplar = [/<script/i, /UNION SELECT/i, /base64_/i, /\.\.\//];
-        return !tehlikeliKalıplar.some(p => p.test(decodeURIComponent(url)));
+        return !/<script|UNION SELECT|\.\.\//i.test(decodeURIComponent(url));
     }
 };
-
+// Saatte bir temizlik
+setInterval(() => {
+    const sinir = Date.now() - 60000;
+    for (const [ip, kayit] of ISTEK_DEPOSU) {
+        if (kayit.zaman < sinir) ISTEK_DEPOSU.delete(ip);
+    }
+}, 60000);
 module.exports = Koruma;
-
