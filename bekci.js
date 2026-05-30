@@ -1,4 +1,6 @@
+#!/usr/bin/env node
 const { spawn } = require('child_process');
+// ... geri kalan kodlar aynı
 
 // Yapılandırma
 const AYARLAR = {
