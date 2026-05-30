@@ -26,9 +26,12 @@ const Sistem = {
     yeniden_başlat: () => { console.log("ZedinScript Yenileniyor..."); process.exit(0); }
 };
 
+// Global sunucu değişkeni (Ag.dinle içinde kullanacağız)
+let aktifSunucu = null;
+
 const Ag = {
     sunucu_kur: (islem) => {
-        return http.createServer((istek, yanit) => {
+        aktifSunucu = http.createServer((istek, yanit) => {
             const ip = istek.headers['x-forwarded-for'] || istek.socket.remoteAddress;
 
             if (!koruma.hizSiniri(ip) || !koruma.sorguKontrol(istek.url)) {
@@ -61,6 +64,7 @@ const Ag = {
 
             islem(istek, yanit);
         });
+        return aktifSunucu;
     },
     çerez_oku: (istek) => {
         const liste = {};
@@ -72,32 +76,23 @@ const Ag = {
         let govde = '';
         istek.on('data', p => { if(govde.length < 500000) govde += p; });
         istek.on('end', () => { geri_donus(Object.fromEntries(new URLSearchParams(govde))); });
+    },
+    // EKSİK OLAN METOT BURASIYDI:
+    dinle: (p, mesaj) => {
+        const port = process.env.PORT || p || 8080;
+        if (aktifSunucu) {
+            aktifSunucu.listen(port, '0.0.0.0', () => {
+                console.log(mesaj || `--- [ZEDIN] Sistem ${port} üzerinde aktif! ---`);
+            });
+        } else {
+            console.error("HATA: Önce ağ.sunucu_kur ile sunucuyu oluşturmalısın!");
+        }
     }
-}; // <--- AG OBJESİ BURADA KAPANMALIYDI, EKSİKTİ!
+};
 
-// --- SUNUCU BAŞLATMA ---
-const port = process.env.PORT || 8080;
-
-// Ag.sunucu_kur kullanarak sunucuyu oluşturuyoruz
-const sunucu = Ag.sunucu_kur((istek, yanit) => {
-    // Eğer bir ana dosya üzerinden işlem yapıyorsan burayı kullanabilirsin
-    // Şimdilik boş bırakıyorum çünkü 'calistir' fonksiyonun ana dosyayı yüklüyor.
-});
-
-sunucu.on('error', (e) => {
-    if (e.code === 'EADDRINUSE') {
-        console.error(`[ZEDIN] Port ${port} meşgul!`);
-        process.exit(1);
-    }
-});
-
-sunucu.listen(port, '0.0.0.0', () => {
-    console.log(`--- [ZEDIN] Sistem ${port} üzerinde aktif! ---`);
-});
-
-// --- YARDIMCI FONKSİYONLAR ---
-const Veri = {}; // Eksik tanımlama eklendi
-const Gorsel = {}; // Eksik tanımlama eklendi
+// --- YARDIMCI TANIMLAR ---
+const Veri = {};
+const Gorsel = {};
 
 const getir = (dosya) => {
     try {
@@ -113,12 +108,17 @@ function calistir(dosya) {
     try {
         const ham = fs.readFileSync(dosya, 'utf8');
         const js = optimizasyon.hizliCeviri(ham);
+        // Function parametrelerini betiklerle eşleştiriyoruz
         const betik = new Function('fs', 'console', 'metin', 'veri', 'ağ', 'görsel', 'getir', 'sistem', 'dosya_oku', 'dosya_yaz', 'sistem_saati', 'yazdır', 'zamanla', js);
-        betik(fs, console, Metin, {}, Ag, {}, getir, Sistem, fs.readFileSync, fs.writeFileSync, Date.now(), console.log, setInterval);
-    } catch (hata) { console.error("ÇALIŞTIRMA HATASI:", hata.message); }
+        betik(fs, console, Metin, Veri, Ag, Gorsel, getir, Sistem, fs.readFileSync, fs.writeFileSync, Date.now(), console.log, setInterval);
+    } catch (hata) { 
+        console.error("--- ZEDINSCRIPT SİSTEM HATASI ---");
+        console.error("Dosya:", dosya);
+        console.error("Hata:", hata.message); 
+    }
 }
 
-// Komut satırından dosya gelirse çalıştır
+// Komut satırından gelen .zs dosyasını çalıştır (Örn: node zedin.js index.zs)
 if(process.argv[2]) {
     calistir(process.argv[2]);
 }
