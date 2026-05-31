@@ -73,4 +73,9 @@ değişken sunucu = ağ.sunucu_kur(görev(istek, yanıt) {
     }
     değilse { yanıt.gönder("404", 404); }
 });
+değilse eğer (istek.url == "/temizle") {
+    dosya_yaz("linkler.json", "[]");
+    yanıt.gönder("Linkler temizlendi!");
+}
+
 ağ.dinle(8080);
